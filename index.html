@@ -458,7 +458,7 @@
       <button class="btn btn-sm" id="importBtn">⤒ Importar</button>
       <input type="file" id="importFileInput" accept="application/json" class="hidden">
     </div>
-    <p class="sidebar-hint">Para publicar o site já com esse conteúdo para todo mundo, exporte e cole o JSON na constante <code>DEFAULT_DATA</code> no início do script.</p>
+    <p class="sidebar-hint">Franquias salvas em <code>franquias/</code> (listadas em <code>franquias/index.json</code>) são carregadas automaticamente ao publicar o site. Use "Exportar franquia" para gerar o arquivo certo dessa pasta.</p>
   </aside>
 
   <main id="main">
@@ -470,6 +470,7 @@
       </div>
       <div class="header-actions">
         <button class="btn btn-sm" id="editFranchiseBtn">Editar</button>
+        <button class="btn btn-sm" id="exportFranchiseBtn">⤓ Exportar franquia</button>
         <button class="btn btn-sm btn-danger" id="deleteFranchiseBtn">Excluir</button>
         <button class="btn btn-primary" id="addItemBtn">+ Adicionar item</button>
       </div>
@@ -596,12 +597,21 @@
 
   const STORAGE_KEY = "cartografia.franchiseTracker.v1";
 
-  // Para publicar o site com conteúdo padrão visível a todos os visitantes
-  // (mesmo antes de eles importarem ou salvarem qualquer coisa), exporte seus
-  // dados pelo botão "Exportar" na sidebar e cole o JSON resultante aqui,
-  // substituindo "null" por esse objeto. Cada visitante ainda pode editar
-  // livremente por cima — as edições ficam salvas só no navegador dele.
+  // Alternativa simples (sem precisar de servidor nem pasta franquias/): cole
+  // aqui um JSON exportado pelo botão "Exportar" para o site já abrir com esse
+  // conteúdo. O método recomendado, porém, é a pasta franquias/ descrita
+  // abaixo — ela permite adicionar franquias sem editar este arquivo.
   const DEFAULT_DATA = null;
+
+  // Carregamento automático a partir de arquivos do repositório: coloque uma
+  // pasta "franquias/" ao lado deste HTML, com um "franquias/index.json"
+  // listando os nomes dos arquivos, e um arquivo .json por franquia (gerado
+  // pelo botão "Exportar franquia"). Ex. de franquias/index.json:
+  //   ["zelda.json", "harry-potter.json"]
+  // Isso só funciona quando o site é servido por um servidor (http/https) —
+  // não funciona abrindo o arquivo direto (file://) por causa do CORS do navegador.
+  const FRANCHISES_DIR = 'franquias/';
+  const FRANCHISES_INDEX = FRANCHISES_DIR + 'index.json';
 
   // ---------------- state ----------------
   function loadState(){
@@ -626,6 +636,51 @@
   function currentFranchise(){
     if(!state.selectedFranchiseId) return null;
     return state.franchises[state.selectedFranchiseId] || null;
+  }
+
+  function slugify(str){
+    return (str || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'-')
+      .replace(/(^-|-$)/g,'') || 'franquia';
+  }
+
+  // garante que uma franquia lida de um arquivo externo tenha o formato esperado
+  function normalizeFranchise(data, fallbackId){
+    if(!data || typeof data !== 'object') return null;
+    const id = data.id || fallbackId || uid();
+    return {
+      id,
+      name: data.name || 'Sem nome',
+      type: data.type || '',
+      description: data.description || '',
+      createdAt: data.createdAt || Date.now(),
+      items: (data.items && typeof data.items === 'object') ? data.items : {},
+      edges: Array.isArray(data.edges) ? data.edges : []
+    };
+  }
+
+  // busca franquias publicadas na pasta franquias/ (ver franquias/index.json)
+  async function loadRemoteFranchises(){
+    try{
+      const res = await fetch(FRANCHISES_INDEX, { cache: 'no-store' });
+      if(!res.ok) return [];
+      const list = await res.json();
+      if(!Array.isArray(list)) return [];
+      const results = await Promise.all(list.map(async (filename)=>{
+        try{
+          const r = await fetch(FRANCHISES_DIR + filename, { cache: 'no-store' });
+          if(!r.ok) return null;
+          const data = await r.json();
+          return normalizeFranchise(data, slugify(filename.replace(/\.json$/i,'')));
+        }catch(e){ return null; }
+      }));
+      return results.filter(Boolean);
+    }catch(e){
+      // sem pasta franquias/, sem servidor (file://), ou outro problema de rede — tudo bem, segue com os dados locais
+      return [];
+    }
   }
 
   // ---------------- DOM refs ----------------
@@ -1121,7 +1176,22 @@
     }
   });
 
-  // ---------------- export / import ----------------
+  document.getElementById('exportFranchiseBtn').addEventListener('click', ()=>{
+    const fr = currentFranchise();
+    if(!fr) return;
+    const dataStr = JSON.stringify(fr, null, 2);
+    const blob = new Blob([dataStr], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = slugify(fr.name) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // ---------------- export / import (tudo) ----------------
   document.getElementById('exportBtn').addEventListener('click', ()=>{
     const dataStr = JSON.stringify(state, null, 2);
     const blob = new Blob([dataStr], {type:'application/json'});
@@ -1176,6 +1246,23 @@
 
   // ---------------- init ----------------
   renderAll();
+
+  loadRemoteFranchises().then(remoteList=>{
+    if(!remoteList.length) return;
+    let added = false;
+    remoteList.forEach(fr=>{
+      if(fr.id && !state.franchises[fr.id]){
+        state.franchises[fr.id] = fr;
+        added = true;
+      }
+    });
+    if(added){
+      if(!state.selectedFranchiseId){
+        state.selectedFranchiseId = Object.keys(state.franchises)[0];
+      }
+      renderAll();
+    }
+  });
 })();
 </script>
 </body>
