@@ -1,464 +1,30 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+﻿﻿<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cartografia — Organizador de Franquias</title>
+<title>Cartography — Franchise Order Organizer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg: #12141c;
-    --bg-2: #0e1017;
-    --surface: #1b1f2b;
-    --surface-2: #232838;
-    --border: #2e3446;
-    --text: #edeae0;
-    --text-muted: #8b90a0;
-    --accent: #c9a15f;
-    --accent-soft: rgba(201,161,95,0.16);
-    --done: #6fa287;
-    --done-soft: rgba(111,162,135,0.16);
-    --progress: #c9a15f;
-    --pending: #626a80;
-    --pending-soft: rgba(98,106,128,0.16);
-    --danger: #c4665c;
-    --danger-soft: rgba(196,102,92,0.14);
-    --radius: 12px;
-    --font-display: 'Fraunces', serif;
-    --font-body: 'Inter', sans-serif;
-    --font-mono: 'IBM Plex Mono', monospace;
-  }
-
-  *{ box-sizing: border-box; }
-  html,body{ height:100%; margin:0; }
-  body{
-    background: radial-gradient(ellipse at top left, #171b26 0%, var(--bg) 45%, var(--bg-2) 100%);
-    color: var(--text);
-    font-family: var(--font-body);
-    overflow: hidden;
-  }
-  ::selection{ background: var(--accent-soft); color: var(--text); }
-
-  button{ font-family: inherit; cursor:pointer; }
-  input, textarea, select{ font-family: inherit; }
-
-  /* ---------- layout shell ---------- */
-  #app{ display:flex; height:100vh; width:100vw; }
-
-  #sidebar{
-    width: 260px;
-    flex-shrink:0;
-    background: linear-gradient(180deg, var(--surface), var(--bg-2));
-    border-right: 1px solid var(--border);
-    display:flex;
-    flex-direction:column;
-    padding: 22px 16px;
-  }
-  .brand{
-    font-family: var(--font-display);
-    font-weight:600;
-    font-size: 19px;
-    letter-spacing: 0.3px;
-    margin: 0 4px 4px;
-  }
-  .brand small{
-    display:block;
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-top: 3px;
-  }
-  .sidebar-divider{ height:1px; background: var(--border); margin: 16px 4px 12px; }
-
-  #franchiseList{
-    flex:1;
-    overflow-y:auto;
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-    padding-right: 2px;
-  }
-  #franchiseList::-webkit-scrollbar{ width:6px; }
-  #franchiseList::-webkit-scrollbar-thumb{ background: var(--border); border-radius:4px; }
-
-  .ftype-group-header{
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    padding: 14px 8px 6px;
-  }
-  .ftype-group-header:first-child{ padding-top: 4px; }
-
-  .franchise-item{
-    display:flex;
-    flex-direction:column;
-    align-items:stretch;
-    gap:6px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border-left: 3px solid transparent;
-    color: var(--text-muted);
-    border-top: 1px solid transparent;
-    border-right: 1px solid transparent;
-    border-bottom: 1px solid transparent;
-    cursor:pointer;
-    transition: background .15s, color .15s, border-color .15s;
-  }
-  .franchise-item:hover{ background: var(--surface-2); color: var(--text); }
-  .franchise-item.active{
-    background: var(--accent-soft);
-    border-top-color: rgba(201,161,95,0.35);
-    border-right-color: rgba(201,161,95,0.35);
-    border-bottom-color: rgba(201,161,95,0.35);
-    color: var(--text);
-  }
-  .franchise-item-top{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:8px;
-  }
-  .franchise-item .fname{
-    font-size: 13.5px;
-    font-weight:500;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    flex:1;
-  }
-  .franchise-item .fcount{
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    color: var(--text-muted);
-    flex-shrink:0;
-  }
-  .ftype-pill{
-    align-self:flex-start;
-    font-family: var(--font-mono);
-    font-size: 9.5px;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    padding: 2px 8px;
-    border-radius: 20px;
-  }
-
-  .sidebar-footer-actions{ display:flex; gap:8px; margin-top:10px; }
-  .sidebar-footer-actions .btn{ flex:1; justify-content:center; }
-  .sidebar-hint{
-    font-size: 10.5px;
-    line-height: 1.55;
-    color: var(--text-muted);
-    margin: 10px 2px 0;
-  }
-  .sidebar-hint code{
-    background: var(--surface-2);
-    padding: 1px 4px;
-    border-radius: 4px;
-    font-family: var(--font-mono);
-    font-size: 9.5px;
-  }
-
-  .empty-sidebar{
-    color: var(--text-muted);
-    font-size: 12.5px;
-    line-height:1.6;
-    padding: 8px 4px;
-  }
-
-  .btn{
-    border: 1px solid var(--border);
-    background: var(--surface-2);
-    color: var(--text);
-    padding: 9px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    transition: background .15s, border-color .15s, transform .1s;
-    display:inline-flex;
-    align-items:center;
-    gap:7px;
-    white-space:nowrap;
-  }
-  .btn:hover{ background:#2a3040; border-color:#3a4158; }
-  .btn:active{ transform: scale(0.98); }
-  .btn-primary{
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #1a1508;
-    font-weight:600;
-  }
-  .btn-primary:hover{ background:#d6ad6a; border-color:#d6ad6a; }
-  .btn-danger{ color: var(--danger); }
-  .btn-danger:hover{ background: var(--danger-soft); border-color: rgba(196,102,92,0.4); }
-  .btn-ghost{ background:transparent; border-color:transparent; color: var(--text-muted); padding:6px 8px; }
-  .btn-ghost:hover{ background: var(--surface-2); color: var(--text); }
-  .btn-block{ width:100%; justify-content:center; }
-  .btn-sm{ padding:6px 10px; font-size:12px; }
-
-  #newFranchiseBtn{ margin-top: 14px; }
-
-  /* ---------- main area ---------- */
-  #main{ flex:1; display:flex; flex-direction:column; min-width:0; }
-
-  #franchiseHeader{
-    padding: 22px 30px 16px;
-    border-bottom: 1px solid var(--border);
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap: 20px;
-  }
-  .header-title-wrap h1{
-    font-family: var(--font-display);
-    font-size: 26px;
-    font-weight: 600;
-    margin:0 0 6px;
-    letter-spacing:0.2px;
-  }
-  .header-title-wrap p{
-    margin:0;
-    color: var(--text-muted);
-    font-size: 13.5px;
-    max-width: 640px;
-    line-height:1.5;
-  }
-  .header-actions{ display:flex; gap:8px; flex-shrink:0; align-items:center; }
-  .stats-row{
-    display:flex; gap: 14px; margin-top:12px; flex-wrap:wrap;
-  }
-  .stat-pill{
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-muted);
-    display:flex; align-items:center; gap:6px;
-    padding: 4px 10px;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-  }
-  .stat-dot{ width:7px; height:7px; border-radius:50%; }
-
-  #canvasWrapper{
-    flex:1;
-    overflow: auto;
-    position: relative;
-    background-image:
-      radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px);
-    background-size: 26px 26px;
-  }
-  #canvasWrapper::-webkit-scrollbar{ height:12px; width:12px; }
-  #canvasWrapper::-webkit-scrollbar-track{ background: var(--bg-2); }
-  #canvasWrapper::-webkit-scrollbar-thumb{ background: var(--surface-2); border-radius: 8px; border: 2px solid var(--bg-2); }
-  #canvasWrapper::-webkit-scrollbar-thumb:hover{ background: var(--border); }
-
-  #canvasInner{ position:relative; }
-  #edgesLayer{ position:absolute; top:0; left:0; pointer-events:none; }
-  #nodesLayer{ position:absolute; top:0; left:0; }
-
-  .node-card{
-    position:absolute;
-    background: linear-gradient(160deg, var(--surface-2), var(--surface));
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 14px;
-    cursor:pointer;
-    transition: transform .15s, border-color .15s, box-shadow .15s;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-  }
-  .node-card:hover{
-    transform: translateY(-2px);
-    border-color: rgba(201,161,95,0.5);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-  }
-  .node-card .ntype{
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 5px;
-  }
-  .node-card .ntitle{
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 15px;
-    line-height: 1.25;
-    margin-bottom: 8px;
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;
-    overflow:hidden;
-  }
-  .status-pill{
-    display:inline-flex;
-    align-items:center;
-    gap:5px;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.5px;
-    padding: 3px 8px;
-    border-radius: 20px;
-  }
-  .status-pill.done{ background: var(--done-soft); color: var(--done); }
-  .status-pill.progress{ background: var(--accent-soft); color: var(--progress); }
-  .status-pill.pending{ background: var(--pending-soft); color: var(--pending); }
-  .status-dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
-
-  .node-card.st-progress{
-    border-color: rgba(201,161,95,0.65);
-    animation: beacon 2.6s ease-in-out infinite;
-  }
-  @keyframes beacon{
-    0%, 100% { box-shadow: 0 2px 10px rgba(0,0,0,0.25), 0 0 0 0 rgba(201,161,95,0.35); }
-    50% { box-shadow: 0 2px 10px rgba(0,0,0,0.25), 0 0 0 7px rgba(201,161,95,0); }
-  }
-  @media (prefers-reduced-motion: reduce){
-    .node-card.st-progress{ animation:none; }
-  }
-
-  .edge-path{
-    fill:none;
-    stroke: var(--border);
-    stroke-width: 1.6;
-  }
-  .edge-path.lit{ stroke: rgba(201,161,95,0.55); }
-
-  /* ---------- empty states ---------- */
-  .empty-state{
-    position:absolute; inset:0;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    text-align:center; gap:14px; padding: 20px;
-  }
-  .empty-state .glyph{
-    font-family: var(--font-display); font-size:40px; color: var(--border);
-  }
-  .empty-state h3{ font-family: var(--font-display); font-size:20px; margin:0; font-weight:600; }
-  .empty-state p{ color: var(--text-muted); font-size:13.5px; max-width:360px; margin:0; line-height:1.6; }
-
-  /* ---------- modals ---------- */
-  .overlay{
-    position:fixed; inset:0; background: rgba(8,9,13,0.6);
-    backdrop-filter: blur(2px);
-    display:flex; align-items:center; justify-content:center;
-    z-index: 100;
-    padding: 20px;
-  }
-  .hidden{ display:none !important; }
-  .modal{
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    width: 100%;
-    max-width: 480px;
-    max-height: 86vh;
-    overflow-y:auto;
-    padding: 24px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  }
-  .modal h2{
-    font-family: var(--font-display);
-    font-size: 20px;
-    margin: 0 0 18px;
-    font-weight:600;
-  }
-  .field{ margin-bottom: 16px; }
-  .field label{
-    display:block;
-    font-size: 11.5px;
-    font-weight:600;
-    letter-spacing:0.4px;
-    text-transform:uppercase;
-    color: var(--text-muted);
-    margin-bottom: 7px;
-    font-family: var(--font-mono);
-  }
-  .field input[type=text], .field textarea, .field select{
-    width:100%;
-    background: var(--bg-2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 13.5px;
-    outline:none;
-    transition: border-color .15s;
-  }
-  .field input[type=text]:focus, .field textarea:focus, .field select:focus{
-    border-color: var(--accent);
-  }
-  .field textarea{ resize:vertical; min-height:64px; }
-  .status-options{ display:flex; gap:8px; flex-wrap:wrap; }
-  .status-choice{
-    flex:1;
-    text-align:center;
-    padding: 9px 6px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    font-size: 12px;
-    font-weight:500;
-    color: var(--text-muted);
-    transition: all .15s;
-  }
-  .status-choice.active.pending{ background: var(--pending-soft); border-color: var(--pending); color:var(--text); }
-  .status-choice.active.progress{ background: var(--accent-soft); border-color: var(--accent); color:var(--text); }
-  .status-choice.active.done{ background: var(--done-soft); border-color: var(--done); color:var(--text); }
-
-  .parent-list{
-    max-height: 160px;
-    overflow-y:auto;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg-2);
-  }
-  .parent-list.empty-hint{ padding: 12px; color: var(--text-muted); font-size:12.5px; }
-  .parent-row{
-    display:flex; align-items:center; gap:9px;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-  }
-  .parent-row:last-child{ border-bottom:none; }
-  .parent-row input{ accent-color: var(--accent); width:14px; height:14px; }
-
-  .modal-actions{
-    display:flex; justify-content:space-between; align-items:center; margin-top: 20px; gap:10px;
-  }
-  .modal-actions .right{ display:flex; gap:8px; }
-
-  .confirm-text{ color: var(--text-muted); font-size:13.5px; line-height:1.6; margin-bottom:20px; }
-
-  #detailBackdrop{ z-index: 90; }
-
-  @media (max-width: 760px){
-    #app{ flex-direction:column; }
-    #sidebar{ width:100%; height:auto; border-right:none; border-bottom:1px solid var(--border); flex-direction:row; align-items:center; padding:12px 14px; }
-    .brand{ display:none; }
-    .sidebar-divider{ display:none; }
-    #franchiseList{ flex-direction:row; overflow-x:auto; overflow-y:visible; }
-    #newFranchiseBtn{ margin-top:0; flex-shrink:0; }
-    #franchiseHeader{ flex-direction:column; padding: 16px 18px; }
-  }
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
+<header id="topbar">
+  <div class="topbar-brand">Cartography<small>Orders &amp; franchises</small></div>
+</header>
+
 <div id="app">
   <aside id="sidebar">
-    <div class="brand">Cartografia<small>Ordens &amp; franquias</small></div>
-    <div class="sidebar-divider"></div>
     <div id="franchiseList"></div>
-    <button class="btn btn-primary btn-block" id="newFranchiseBtn">+ Nova franquia</button>
+    <button class="btn btn-primary btn-block" id="newFranchiseBtn">+ New franchise</button>
     <div class="sidebar-footer-actions">
-      <button class="btn btn-sm" id="exportBtn">⤓ Exportar</button>
-      <button class="btn btn-sm" id="importBtn">⤒ Importar</button>
+      <button class="btn btn-sm" id="exportBtn">⤓ Export</button>
+      <button class="btn btn-sm" id="importBtn">⤒ Import</button>
       <input type="file" id="importFileInput" accept="application/json" class="hidden">
     </div>
-    <p class="sidebar-hint">Franquias salvas em <code>franquias/</code> (listadas em <code>franquias/index.json</code>) são carregadas automaticamente ao publicar o site. Use "Exportar franquia" para gerar o arquivo certo dessa pasta.</p>
+    <p class="sidebar-hint" id="sidebarHintText"></p>
   </aside>
 
   <main id="main">
@@ -469,10 +35,10 @@
         <div class="stats-row" id="statsRow"></div>
       </div>
       <div class="header-actions">
-        <button class="btn btn-sm" id="editFranchiseBtn">Editar</button>
-        <button class="btn btn-sm" id="exportFranchiseBtn">⤓ Exportar franquia</button>
-        <button class="btn btn-sm btn-danger" id="deleteFranchiseBtn">Excluir</button>
-        <button class="btn btn-primary" id="addItemBtn">+ Adicionar item</button>
+        <button class="btn btn-sm" id="editFranchiseBtn">Edit</button>
+        <button class="btn btn-sm" id="exportFranchiseBtn">⤓ Export franchise</button>
+        <button class="btn btn-sm btn-danger" id="deleteFranchiseBtn">Delete</button>
+        <button class="btn btn-primary" id="addItemBtn">+ Add item</button>
       </div>
     </header>
 
@@ -483,15 +49,15 @@
       </div>
       <div id="noFranchiseState" class="empty-state">
         <div class="glyph">✦</div>
-        <h3>Nenhuma franquia selecionada</h3>
-        <p>Crie uma franquia para começar a mapear a ordem de jogos, livros ou HQs que você quer seguir.</p>
-        <button class="btn btn-primary" id="emptyNewFranchiseBtn">+ Nova franquia</button>
+        <h3>No franchise selected</h3>
+        <p>Create a franchise to start mapping the order of games, books or comics you want to follow.</p>
+        <button class="btn btn-primary" id="emptyNewFranchiseBtn">+ New franchise</button>
       </div>
       <div id="noItemsState" class="empty-state hidden">
         <div class="glyph">◇</div>
-        <h3>Ainda não há itens aqui</h3>
-        <p>Adicione o primeiro jogo, livro ou HQ da franquia para começar a construir a árvore de ordem.</p>
-        <button class="btn btn-primary" id="emptyAddItemBtn">+ Adicionar item</button>
+        <h3>No items yet</h3>
+        <p>Add the first game, book or comic of the franchise to start building the order tree.</p>
+        <button class="btn btn-primary" id="emptyAddItemBtn">+ Add item</button>
       </div>
     </div>
   </main>
@@ -500,32 +66,23 @@
 <!-- Franchise modal -->
 <div class="overlay hidden" id="franchiseModalOverlay">
   <div class="modal">
-    <h2 id="franchiseModalTitle">Nova franquia</h2>
+    <h2 id="franchiseModalTitle">New franchise</h2>
     <div class="field">
-      <label for="franchiseNameInput">Nome</label>
-      <input type="text" id="franchiseNameInput" placeholder="Ex: The Legend of Zelda">
+      <label for="franchiseNameInput">Name</label>
+      <input type="text" id="franchiseNameInput" placeholder="E.g.: The Legend of Zelda">
     </div>
     <div class="field">
-      <label for="franchiseTypeInput">Tipo</label>
-      <input type="text" id="franchiseTypeInput" list="franchiseTypeSuggestions" placeholder="Jogo, Livro, Série, HQ...">
-      <datalist id="franchiseTypeSuggestions">
-        <option value="Jogo"></option>
-        <option value="Livro"></option>
-        <option value="HQ"></option>
-        <option value="Série"></option>
-        <option value="Série de filmes"></option>
-        <option value="Filme"></option>
-        <option value="Anime"></option>
-        <option value="Outro"></option>
-      </datalist>
+      <label for="franchiseTypeInput">Type</label>
+      <input type="text" id="franchiseTypeInput" list="franchiseTypeSuggestions" placeholder="Game, Book, Series, Comic...">
+      <datalist id="franchiseTypeSuggestions"></datalist>
     </div>
     <div class="field">
-      <label for="franchiseDescInput">Descrição (opcional)</label>
-      <textarea id="franchiseDescInput" placeholder="Uma breve nota sobre esta franquia..."></textarea>
+      <label for="franchiseDescInput">Description (optional)</label>
+      <textarea id="franchiseDescInput" placeholder="A short note about this franchise..."></textarea>
     </div>
     <div class="modal-actions">
-      <button class="btn" id="franchiseCancelBtn">Cancelar</button>
-      <button class="btn btn-primary" id="franchiseSaveBtn">Salvar</button>
+      <button class="btn" id="franchiseCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="franchiseSaveBtn">Save</button>
     </div>
   </div>
 </div>
@@ -533,47 +90,55 @@
 <!-- Item modal -->
 <div class="overlay hidden" id="itemModalOverlay">
   <div class="modal">
-    <h2 id="itemModalTitle">Novo item</h2>
+    <h2 id="itemModalTitle">New item</h2>
     <div class="field">
-      <label for="itemTitleInput">Título</label>
-      <input type="text" id="itemTitleInput" placeholder="Ex: Ocarina of Time">
+      <label for="gameSearchInput">Search game library</label>
+      <div class="search-row">
+        <input type="text" id="gameSearchInput" placeholder="Search Wikipedia for a game...">
+        <button class="btn btn-sm" id="gameSearchBtn">Search</button>
+      </div>
+      <div class="search-results hidden" id="gameSearchResults"></div>
+      <div class="search-status hidden" id="gameSearchStatus"></div>
     </div>
     <div class="field">
-      <label for="itemTypeInput">Tipo</label>
-      <input type="text" id="itemTypeInput" list="typeSuggestions" placeholder="Jogo, Livro, HQ, Filme...">
-      <datalist id="typeSuggestions">
-        <option value="Jogo"></option>
-        <option value="Livro"></option>
-        <option value="HQ"></option>
-        <option value="Filme"></option>
-        <option value="Série"></option>
-        <option value="Anime"></option>
-        <option value="Outro"></option>
-      </datalist>
+      <label>Cover</label>
+      <div class="cover-preview" id="coverPreview"></div>
     </div>
     <div class="field">
-      <label for="itemDescInput">Descrição (opcional)</label>
-      <textarea id="itemDescInput" placeholder="Notas, contexto, onde encaixa na linha do tempo..."></textarea>
+      <label for="itemTitleInput">Title</label>
+      <input type="text" id="itemTitleInput" placeholder="E.g.: Ocarina of Time">
+    </div>
+    <div class="field">
+      <label for="itemTypeInput">Type</label>
+      <input type="text" id="itemTypeInput" list="typeSuggestions" placeholder="Game, Book, Comic, Movie...">
+      <datalist id="typeSuggestions"></datalist>
+    </div>
+    <div class="field">
+      <label for="itemDescInput">Description (optional)</label>
+      <textarea id="itemDescInput" placeholder="Notes, context, where it fits in the timeline..."></textarea>
     </div>
     <div class="field">
       <label>Status</label>
       <div class="status-options" id="statusOptions">
-        <div class="status-choice pending" data-status="pending">Não iniciado</div>
-        <div class="status-choice progress" data-status="progress">Em andamento</div>
-        <div class="status-choice done" data-status="done">Concluído</div>
+        <div class="status-choice pending" data-status="pending">Not started</div>
+        <div class="status-choice progress" data-status="progress">In progress</div>
+        <div class="status-choice done" data-status="done">Done</div>
       </div>
     </div>
     <div class="field">
-      <label>Vem depois de <span style="text-transform:none;font-weight:400;">(pré-requisitos — pode marcar mais de um)</span></label>
+      <label>
+        <span>Comes after</span>
+        <span id="fieldParentsHint" style="text-transform:none;font-weight:400;">(prerequisites — you can pick more than one)</span>
+      </label>
       <div class="parent-list" id="parentList"></div>
     </div>
     <div class="modal-actions">
       <div>
-        <button class="btn btn-danger hidden" id="itemDeleteBtn">Excluir item</button>
+        <button class="btn btn-danger hidden" id="itemDeleteBtn">Delete item</button>
       </div>
       <div class="right">
-        <button class="btn" id="itemCancelBtn">Cancelar</button>
-        <button class="btn btn-primary" id="itemSaveBtn">Salvar</button>
+        <button class="btn" id="itemCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="itemSaveBtn">Save</button>
       </div>
     </div>
   </div>
@@ -582,688 +147,15 @@
 <!-- Confirm modal -->
 <div class="overlay hidden" id="confirmOverlay">
   <div class="modal" style="max-width:380px;">
-    <h2 id="confirmTitle">Tem certeza?</h2>
+    <h2 id="confirmTitle">Are you sure?</h2>
     <p class="confirm-text" id="confirmText"></p>
     <div class="modal-actions">
-      <button class="btn" id="confirmCancelBtn">Cancelar</button>
-      <button class="btn btn-danger" id="confirmOkBtn">Excluir</button>
+      <button class="btn" id="confirmCancelBtn">Cancel</button>
+      <button class="btn btn-danger" id="confirmOkBtn">Delete</button>
     </div>
   </div>
 </div>
 
-<script>
-(function(){
-  "use strict";
-
-  const STORAGE_KEY = "cartografia.franchiseTracker.v1";
-
-  // Alternativa simples (sem precisar de servidor nem pasta franquias/): cole
-  // aqui um JSON exportado pelo botão "Exportar" para o site já abrir com esse
-  // conteúdo. O método recomendado, porém, é a pasta franquias/ descrita
-  // abaixo — ela permite adicionar franquias sem editar este arquivo.
-  const DEFAULT_DATA = null;
-
-  // Carregamento automático a partir de arquivos do repositório: coloque uma
-  // pasta "franquias/" ao lado deste HTML, com um "franquias/index.json"
-  // listando os nomes dos arquivos, e um arquivo .json por franquia (gerado
-  // pelo botão "Exportar franquia"). Ex. de franquias/index.json:
-  //   ["zelda.json", "harry-potter.json"]
-  // Isso só funciona quando o site é servido por um servidor (http/https) —
-  // não funciona abrindo o arquivo direto (file://) por causa do CORS do navegador.
-  const FRANCHISES_DIR = 'franquias/';
-  const FRANCHISES_INDEX = FRANCHISES_DIR + 'index.json';
-
-  // ---------------- state ----------------
-  function loadState(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(raw) return JSON.parse(raw);
-    }catch(e){ console.warn("Falha ao carregar dados salvos", e); }
-    if(DEFAULT_DATA){
-      try{ return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
-      catch(e){ console.warn("DEFAULT_DATA inválido", e); }
-    }
-    return { franchises:{}, selectedFranchiseId:null };
-  }
-  function saveState(){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch(e){ console.warn("Falha ao salvar dados", e); }
-  }
-  let state = loadState();
-
-  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
-
-  function currentFranchise(){
-    if(!state.selectedFranchiseId) return null;
-    return state.franchises[state.selectedFranchiseId] || null;
-  }
-
-  function slugify(str){
-    return (str || '')
-      .toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^a-z0-9]+/g,'-')
-      .replace(/(^-|-$)/g,'') || 'franquia';
-  }
-
-  // garante que uma franquia lida de um arquivo externo tenha o formato esperado
-  function normalizeFranchise(data, fallbackId){
-    if(!data || typeof data !== 'object') return null;
-    const id = data.id || fallbackId || uid();
-    return {
-      id,
-      name: data.name || 'Sem nome',
-      type: data.type || '',
-      description: data.description || '',
-      createdAt: data.createdAt || Date.now(),
-      items: (data.items && typeof data.items === 'object') ? data.items : {},
-      edges: Array.isArray(data.edges) ? data.edges : []
-    };
-  }
-
-  // busca franquias publicadas na pasta franquias/ (ver franquias/index.json)
-  async function loadRemoteFranchises(){
-    try{
-      const res = await fetch(FRANCHISES_INDEX, { cache: 'no-store' });
-      if(!res.ok) return [];
-      const list = await res.json();
-      if(!Array.isArray(list)) return [];
-      const results = await Promise.all(list.map(async (filename)=>{
-        try{
-          const r = await fetch(FRANCHISES_DIR + filename, { cache: 'no-store' });
-          if(!r.ok) return null;
-          const data = await r.json();
-          return normalizeFranchise(data, slugify(filename.replace(/\.json$/i,'')));
-        }catch(e){ return null; }
-      }));
-      return results.filter(Boolean);
-    }catch(e){
-      // sem pasta franquias/, sem servidor (file://), ou outro problema de rede — tudo bem, segue com os dados locais
-      return [];
-    }
-  }
-
-  // ---------------- DOM refs ----------------
-  const franchiseList = document.getElementById('franchiseList');
-  const franchiseHeader = document.getElementById('franchiseHeader');
-  const franchiseTitle = document.getElementById('franchiseTitle');
-  const franchiseDesc = document.getElementById('franchiseDesc');
-  const statsRow = document.getElementById('statsRow');
-  const canvasInner = document.getElementById('canvasInner');
-  const edgesLayer = document.getElementById('edgesLayer');
-  const nodesLayer = document.getElementById('nodesLayer');
-  const noFranchiseState = document.getElementById('noFranchiseState');
-  const noItemsState = document.getElementById('noItemsState');
-
-  // ---------------- type color helper ----------------
-  const TYPE_PALETTE = ['#c9a15f', '#7fb0c9', '#a68bc9', '#c4665c', '#8bc98f', '#c9c15f', '#c98fae', '#8f9fc9'];
-  function colorForType(type){
-    const key = (type || 'outro').trim().toLowerCase();
-    let hash = 0;
-    for(let i=0;i<key.length;i++) hash = (hash*31 + key.charCodeAt(i)) >>> 0;
-    return TYPE_PALETTE[hash % TYPE_PALETTE.length];
-  }
-
-  // ---------------- rendering: sidebar ----------------
-  function renderSidebar(){
-    franchiseList.innerHTML = '';
-    const list = Object.values(state.franchises);
-    if(!list.length){
-      const div = document.createElement('div');
-      div.className = 'empty-sidebar';
-      div.textContent = 'Nenhuma franquia ainda. Crie a primeira abaixo.';
-      franchiseList.appendChild(div);
-      return;
-    }
-
-    // agrupar por tipo, mantendo franquias do mesmo tipo juntas
-    const groups = {};
-    const groupOrder = [];
-    list.forEach(f=>{
-      const key = (f.type || '').trim();
-      if(!(key in groups)){ groups[key] = []; groupOrder.push(key); }
-      groups[key].push(f);
-    });
-    // ordena os grupos pela franquia mais antiga de cada um; sem tipo vai por último
-    groupOrder.sort((a,b)=>{
-      if(a === '' && b !== '') return 1;
-      if(b === '' && a !== '') return -1;
-      const earliestA = Math.min(...groups[a].map(f=>f.createdAt));
-      const earliestB = Math.min(...groups[b].map(f=>f.createdAt));
-      return earliestA - earliestB;
-    });
-
-    groupOrder.forEach(key=>{
-      const groupColor = key ? colorForType(key) : null;
-
-      const header = document.createElement('div');
-      header.className = 'ftype-group-header';
-      header.textContent = key || 'Sem tipo';
-      if(groupColor) header.style.color = groupColor;
-      franchiseList.appendChild(header);
-
-      groups[key].sort((a,b)=>a.createdAt-b.createdAt).forEach(f=>{
-        const row = document.createElement('div');
-        row.className = 'franchise-item' + (f.id === state.selectedFranchiseId ? ' active' : '');
-        row.style.borderLeftColor = groupColor || 'transparent';
-        row.addEventListener('click', ()=>{
-          state.selectedFranchiseId = f.id;
-          saveState();
-          renderAll();
-        });
-
-        const top = document.createElement('div');
-        top.className = 'franchise-item-top';
-        const name = document.createElement('div');
-        name.className = 'fname';
-        name.textContent = f.name;
-        name.title = f.name;
-        const count = document.createElement('div');
-        count.className = 'fcount';
-        count.textContent = Object.keys(f.items).length;
-        top.appendChild(name);
-        top.appendChild(count);
-        row.appendChild(top);
-
-        franchiseList.appendChild(row);
-      });
-    });
-  }
-
-  // ---------------- rendering: header ----------------
-  function renderHeader(){
-    const fr = currentFranchise();
-    if(!fr){
-      franchiseHeader.classList.add('hidden');
-      return;
-    }
-    franchiseHeader.classList.remove('hidden');
-    franchiseTitle.textContent = fr.name;
-    franchiseDesc.textContent = fr.description || '';
-    franchiseDesc.style.display = fr.description ? 'block' : 'none';
-
-    const items = Object.values(fr.items);
-    const done = items.filter(i=>i.status==='done').length;
-    const progress = items.filter(i=>i.status==='progress').length;
-    const pending = items.filter(i=>i.status==='pending').length;
-    statsRow.innerHTML = '';
-    const pills = [];
-    if(fr.type) pills.push({label: fr.type, color: colorForType(fr.type)});
-    pills.push(
-      {label: items.length + ' no total', color:'var(--text-muted)'},
-      {label: done + ' concluído' + (done===1?'':'s'), color:'var(--done)'},
-      {label: progress + ' em andamento', color:'var(--progress)'},
-      {label: pending + ' não iniciado' + (pending===1?'':'s'), color:'var(--pending)'}
-    );
-    pills.forEach(p=>{
-      const el = document.createElement('div');
-      el.className = 'stat-pill';
-      el.innerHTML = '<span class="stat-dot" style="background:'+p.color+'"></span>' + p.label;
-      statsRow.appendChild(el);
-    });
-  }
-
-  // ---------------- layout algorithm ----------------
-  const NODE_W = 220, NODE_H = 96, COL_GAP = 120, ROW_GAP = 34, PAD = 50;
-
-  function computeLayout(fr){
-    const items = Object.values(fr.items);
-    const parentsMap = {}, childrenMap = {};
-    items.forEach(i=>{ parentsMap[i.id]=[]; childrenMap[i.id]=[]; });
-    (fr.edges||[]).forEach(e=>{
-      if(parentsMap[e.to] !== undefined && childrenMap[e.from] !== undefined){
-        parentsMap[e.to].push(e.from);
-        childrenMap[e.from].push(e.to);
-      }
-    });
-
-    if(!items.length) return {positions:{}, width:0, height:0, parentsMap, childrenMap};
-
-    // longest-path depth via relaxation (robust to convergence + accidental cycles)
-    const depth = {};
-    items.forEach(i=> depth[i.id]=0);
-    for(let iter=0; iter<items.length+1; iter++){
-      let changed = false;
-      items.forEach(i=>{
-        parentsMap[i.id].forEach(pid=>{
-          if(depth[pid]+1 > depth[i.id]){
-            depth[i.id] = depth[pid]+1;
-            changed = true;
-          }
-        });
-      });
-      if(!changed) break;
-    }
-
-    const maxDepth = Math.max(...items.map(i=>depth[i.id]), 0);
-    const columns = Array.from({length:maxDepth+1}, ()=>[]);
-    items.slice().sort((a,b)=>a.createdAt-b.createdAt).forEach(i=> columns[depth[i.id]].push(i.id));
-
-    let orderIndex = {};
-    columns.forEach(col=> col.forEach((id,idx)=> orderIndex[id]=idx));
-    for(let pass=0; pass<3; pass++){
-      for(let c=1;c<columns.length;c++){
-        columns[c].sort((a,b)=>{
-          const avg = id => {
-            const ps = parentsMap[id];
-            if(!ps.length) return orderIndex[id];
-            return ps.reduce((s,p)=>s+orderIndex[p],0)/ps.length;
-          };
-          return avg(a)-avg(b);
-        });
-        columns[c].forEach((id,idx)=> orderIndex[id]=idx);
-      }
-    }
-
-    const colWidth = NODE_W + COL_GAP;
-    const rowStep = NODE_H + ROW_GAP;
-    const positions = {};
-    let maxRows = 1;
-    columns.forEach((col,c)=>{
-      maxRows = Math.max(maxRows, col.length);
-      col.forEach((id,r)=>{
-        positions[id] = { x: PAD + c*colWidth, y: PAD + r*rowStep, w:NODE_W, h:NODE_H };
-      });
-    });
-
-    const width = PAD*2 + columns.length*colWidth - COL_GAP;
-    const height = PAD*2 + maxRows*rowStep - ROW_GAP;
-    return { positions, width, height, parentsMap, childrenMap };
-  }
-
-  // ---------------- rendering: canvas ----------------
-  function renderCanvas(){
-    const fr = currentFranchise();
-    edgesLayer.innerHTML = '';
-    nodesLayer.innerHTML = '';
-
-    if(!fr){
-      noFranchiseState.classList.remove('hidden');
-      noItemsState.classList.add('hidden');
-      canvasInner.style.width = '0px';
-      canvasInner.style.height = '0px';
-      return;
-    }
-    noFranchiseState.classList.add('hidden');
-
-    const items = Object.values(fr.items);
-    if(!items.length){
-      noItemsState.classList.remove('hidden');
-      canvasInner.style.width = '0px';
-      canvasInner.style.height = '0px';
-      return;
-    }
-    noItemsState.classList.add('hidden');
-
-    const { positions, width, height, parentsMap } = computeLayout(fr);
-    canvasInner.style.width = width + 'px';
-    canvasInner.style.height = height + 'px';
-    edgesLayer.setAttribute('width', width);
-    edgesLayer.setAttribute('height', height);
-    edgesLayer.setAttribute('viewBox', '0 0 '+width+' '+height);
-
-    // edges
-    Object.entries(parentsMap).forEach(([childId, parents])=>{
-      parents.forEach(pid=>{
-        const p = positions[pid], c = positions[childId];
-        if(!p || !c) return;
-        const x1 = p.x + p.w, y1 = p.y + p.h/2;
-        const x2 = c.x, y2 = c.y + c.h/2;
-        const mx = (x1+x2)/2;
-        const d = 'M '+x1+' '+y1+' C '+mx+' '+y1+', '+mx+' '+y2+', '+x2+' '+y2;
-        const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-        path.setAttribute('d', d);
-        const childItem = fr.items[childId];
-        path.setAttribute('class', 'edge-path' + (childItem && childItem.status!=='pending' ? ' lit' : ''));
-        edgesLayer.appendChild(path);
-      });
-    });
-
-    // nodes
-    items.forEach(item=>{
-      const pos = positions[item.id];
-      if(!pos) return;
-      const card = document.createElement('div');
-      card.className = 'node-card' + (item.status==='progress' ? ' st-progress' : '');
-      card.style.left = pos.x + 'px';
-      card.style.top = pos.y + 'px';
-      card.style.width = pos.w + 'px';
-
-      const typeEl = document.createElement('div');
-      typeEl.className = 'ntype';
-      typeEl.textContent = item.type || 'Item';
-
-      const titleEl = document.createElement('div');
-      titleEl.className = 'ntitle';
-      titleEl.textContent = item.title;
-
-      const statusEl = document.createElement('div');
-      const statusLabel = item.status==='done' ? 'Concluído' : item.status==='progress' ? 'Em andamento' : 'Não iniciado';
-      statusEl.className = 'status-pill ' + item.status;
-      statusEl.innerHTML = '<span class="status-dot"></span>' + statusLabel;
-
-      card.appendChild(typeEl);
-      card.appendChild(titleEl);
-      card.appendChild(statusEl);
-
-      card.addEventListener('click', ()=> openItemModal(item.id));
-      nodesLayer.appendChild(card);
-    });
-  }
-
-  function renderAll(){
-    renderSidebar();
-    renderHeader();
-    renderCanvas();
-  }
-
-  // ---------------- franchise modal ----------------
-  const franchiseModalOverlay = document.getElementById('franchiseModalOverlay');
-  const franchiseModalTitle = document.getElementById('franchiseModalTitle');
-  const franchiseNameInput = document.getElementById('franchiseNameInput');
-  const franchiseTypeInput = document.getElementById('franchiseTypeInput');
-  const franchiseDescInput = document.getElementById('franchiseDescInput');
-  let editingFranchiseId = null;
-
-  function openFranchiseModal(existingId){
-    editingFranchiseId = existingId || null;
-    if(existingId){
-      const f = state.franchises[existingId];
-      franchiseModalTitle.textContent = 'Editar franquia';
-      franchiseNameInput.value = f.name;
-      franchiseTypeInput.value = f.type || '';
-      franchiseDescInput.value = f.description || '';
-    } else {
-      franchiseModalTitle.textContent = 'Nova franquia';
-      franchiseNameInput.value = '';
-      franchiseTypeInput.value = '';
-      franchiseDescInput.value = '';
-    }
-    franchiseModalOverlay.classList.remove('hidden');
-    setTimeout(()=>franchiseNameInput.focus(), 30);
-  }
-  function closeFranchiseModal(){ franchiseModalOverlay.classList.add('hidden'); }
-
-  document.getElementById('newFranchiseBtn').addEventListener('click', ()=>openFranchiseModal(null));
-  document.getElementById('emptyNewFranchiseBtn').addEventListener('click', ()=>openFranchiseModal(null));
-  document.getElementById('franchiseCancelBtn').addEventListener('click', closeFranchiseModal);
-  document.getElementById('editFranchiseBtn').addEventListener('click', ()=>{
-    if(currentFranchise()) openFranchiseModal(currentFranchise().id);
-  });
-  document.getElementById('franchiseSaveBtn').addEventListener('click', ()=>{
-    const name = franchiseNameInput.value.trim();
-    if(!name){ franchiseNameInput.focus(); return; }
-    const type = franchiseTypeInput.value.trim();
-    const desc = franchiseDescInput.value.trim();
-    if(editingFranchiseId){
-      const f = state.franchises[editingFranchiseId];
-      f.name = name; f.type = type; f.description = desc;
-    } else {
-      const id = uid();
-      state.franchises[id] = { id, name, type, description: desc, createdAt: Date.now(), items:{}, edges:[] };
-      state.selectedFranchiseId = id;
-    }
-    saveState();
-    closeFranchiseModal();
-    renderAll();
-  });
-
-  document.getElementById('deleteFranchiseBtn').addEventListener('click', ()=>{
-    const fr = currentFranchise();
-    if(!fr) return;
-    openConfirm('Excluir "'+fr.name+'"?', 'Todos os itens e conexões desta franquia serão apagados permanentemente.', ()=>{
-      delete state.franchises[fr.id];
-      state.selectedFranchiseId = null;
-      saveState();
-      renderAll();
-    });
-  });
-
-  // ---------------- item modal ----------------
-  const itemModalOverlay = document.getElementById('itemModalOverlay');
-  const itemModalTitle = document.getElementById('itemModalTitle');
-  const itemTitleInput = document.getElementById('itemTitleInput');
-  const itemTypeInput = document.getElementById('itemTypeInput');
-  const itemDescInput = document.getElementById('itemDescInput');
-  const statusOptions = document.getElementById('statusOptions');
-  const parentList = document.getElementById('parentList');
-  const itemDeleteBtn = document.getElementById('itemDeleteBtn');
-  let editingItemId = null;
-  let selectedStatus = 'pending';
-
-  function openItemModal(existingId){
-    const fr = currentFranchise();
-    if(!fr) return;
-    editingItemId = existingId || null;
-    selectedStatus = 'pending';
-
-    if(existingId){
-      const it = fr.items[existingId];
-      itemModalTitle.textContent = 'Editar item';
-      itemTitleInput.value = it.title;
-      itemTypeInput.value = it.type || '';
-      itemDescInput.value = it.description || '';
-      selectedStatus = it.status;
-      itemDeleteBtn.classList.remove('hidden');
-    } else {
-      itemModalTitle.textContent = 'Novo item';
-      itemTitleInput.value = '';
-      itemTypeInput.value = '';
-      itemDescInput.value = '';
-      itemDeleteBtn.classList.add('hidden');
-    }
-    renderStatusOptions();
-
-    // build parent checkbox list (all other items in franchise)
-    parentList.innerHTML = '';
-    const others = Object.values(fr.items).filter(i=>i.id !== existingId);
-    if(!others.length){
-      parentList.classList.add('empty-hint');
-      parentList.textContent = 'Nenhum outro item ainda — este será uma raiz da árvore.';
-    } else {
-      parentList.classList.remove('empty-hint');
-      const currentParents = new Set((fr.edges||[]).filter(e=>e.to===existingId).map(e=>e.from));
-      others.forEach(other=>{
-        const row = document.createElement('label');
-        row.className = 'parent-row';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.value = other.id;
-        cb.checked = currentParents.has(other.id);
-        const span = document.createElement('span');
-        span.textContent = other.title;
-        row.appendChild(cb);
-        row.appendChild(span);
-        parentList.appendChild(row);
-      });
-    }
-
-    itemModalOverlay.classList.remove('hidden');
-    setTimeout(()=>itemTitleInput.focus(), 30);
-  }
-  function closeItemModal(){ itemModalOverlay.classList.add('hidden'); }
-
-  function renderStatusOptions(){
-    [...statusOptions.children].forEach(el=>{
-      el.classList.toggle('active', el.dataset.status === selectedStatus);
-    });
-  }
-  statusOptions.addEventListener('click', (e)=>{
-    const choice = e.target.closest('.status-choice');
-    if(!choice) return;
-    selectedStatus = choice.dataset.status;
-    renderStatusOptions();
-  });
-
-  document.getElementById('addItemBtn').addEventListener('click', ()=>openItemModal(null));
-  document.getElementById('emptyAddItemBtn').addEventListener('click', ()=>openItemModal(null));
-  document.getElementById('itemCancelBtn').addEventListener('click', closeItemModal);
-
-  document.getElementById('itemSaveBtn').addEventListener('click', ()=>{
-    const fr = currentFranchise();
-    if(!fr) return;
-    const title = itemTitleInput.value.trim();
-    if(!title){ itemTitleInput.focus(); return; }
-    const type = itemTypeInput.value.trim();
-    const desc = itemDescInput.value.trim();
-    const checkedParents = [...parentList.querySelectorAll('input[type=checkbox]:checked')].map(cb=>cb.value);
-
-    let id = editingItemId;
-    if(id){
-      const it = fr.items[id];
-      it.title = title; it.type = type; it.description = desc; it.status = selectedStatus;
-    } else {
-      id = uid();
-      fr.items[id] = { id, title, type, description: desc, status: selectedStatus, createdAt: Date.now() };
-    }
-    // rebuild edges pointing to this item based on checked parents
-    fr.edges = (fr.edges||[]).filter(e=>e.to !== id);
-    checkedParents.forEach(pid=> fr.edges.push({from:pid, to:id}));
-
-    saveState();
-    closeItemModal();
-    renderAll();
-  });
-
-  itemDeleteBtn.addEventListener('click', ()=>{
-    const fr = currentFranchise();
-    if(!fr || !editingItemId) return;
-    const it = fr.items[editingItemId];
-    openConfirm('Excluir "'+it.title+'"?', 'As conexões relacionadas a este item também serão removidas.', ()=>{
-      delete fr.items[editingItemId];
-      fr.edges = (fr.edges||[]).filter(e=>e.from!==editingItemId && e.to!==editingItemId);
-      saveState();
-      closeItemModal();
-      renderAll();
-    });
-  });
-
-  // ---------------- confirm modal ----------------
-  const confirmOverlay = document.getElementById('confirmOverlay');
-  const confirmTitle = document.getElementById('confirmTitle');
-  const confirmText = document.getElementById('confirmText');
-  let confirmCallback = null;
-
-  function openConfirm(title, text, onOk, options){
-    options = options || {};
-    confirmTitle.textContent = title;
-    confirmText.textContent = text;
-    confirmCallback = onOk;
-    confirmOkBtn.textContent = options.okLabel || 'Excluir';
-    const danger = options.danger !== false;
-    confirmOkBtn.classList.toggle('btn-danger', danger);
-    confirmOkBtn.classList.toggle('btn-primary', !danger);
-    confirmOverlay.classList.remove('hidden');
-  }
-  function closeConfirm(){ confirmOverlay.classList.add('hidden'); confirmCallback = null; }
-  document.getElementById('confirmCancelBtn').addEventListener('click', closeConfirm);
-  document.getElementById('confirmOkBtn').addEventListener('click', ()=>{
-    if(confirmCallback) confirmCallback();
-    closeConfirm();
-  });
-
-  // ---------------- global UX: close on backdrop / escape ----------------
-  [franchiseModalOverlay, itemModalOverlay, confirmOverlay].forEach(overlay=>{
-    overlay.addEventListener('click', (e)=>{
-      if(e.target === overlay) overlay.classList.add('hidden');
-    });
-  });
-  document.addEventListener('keydown', (e)=>{
-    if(e.key === 'Escape'){
-      franchiseModalOverlay.classList.add('hidden');
-      itemModalOverlay.classList.add('hidden');
-      confirmOverlay.classList.add('hidden');
-    }
-  });
-
-  document.getElementById('exportFranchiseBtn').addEventListener('click', ()=>{
-    const fr = currentFranchise();
-    if(!fr) return;
-    const dataStr = JSON.stringify(fr, null, 2);
-    const blob = new Blob([dataStr], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = slugify(fr.name) + '.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  });
-
-  // ---------------- export / import (tudo) ----------------
-  document.getElementById('exportBtn').addEventListener('click', ()=>{
-    const dataStr = JSON.stringify(state, null, 2);
-    const blob = new Blob([dataStr], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const stamp = new Date().toISOString().slice(0,10);
-    a.download = 'franquias-export-' + stamp + '.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  });
-
-  const importFileInput = document.getElementById('importFileInput');
-  document.getElementById('importBtn').addEventListener('click', ()=> importFileInput.click());
-  importFileInput.addEventListener('change', (e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt)=>{
-      let parsed;
-      try{ parsed = JSON.parse(evt.target.result); }
-      catch(err){
-        alert('Não foi possível ler o arquivo: o JSON está inválido.');
-        importFileInput.value = '';
-        return;
-      }
-      if(!parsed || typeof parsed !== 'object' || typeof parsed.franchises !== 'object'){
-        alert('Esse arquivo não parece ser uma exportação válida deste app.');
-        importFileInput.value = '';
-        return;
-      }
-      openConfirm(
-        'Importar dados?',
-        'Isso vai substituir todos os dados atuais (neste navegador) pelos dados do arquivo importado. Essa ação não pode ser desfeita.',
-        ()=>{
-          state = parsed;
-          if(!state.selectedFranchiseId){
-            const ids = Object.keys(state.franchises || {});
-            state.selectedFranchiseId = ids.length ? ids[0] : null;
-          }
-          saveState();
-          renderAll();
-        },
-        { okLabel: 'Importar', danger: false }
-      );
-      importFileInput.value = '';
-    };
-    reader.readAsText(file);
-  });
-
-  // ---------------- init ----------------
-  renderAll();
-
-  loadRemoteFranchises().then(remoteList=>{
-    if(!remoteList.length) return;
-    let added = false;
-    remoteList.forEach(fr=>{
-      if(fr.id && !state.franchises[fr.id]){
-        state.franchises[fr.id] = fr;
-        added = true;
-      }
-    });
-    if(added){
-      if(!state.selectedFranchiseId){
-        state.selectedFranchiseId = Object.keys(state.franchises)[0];
-      }
-      renderAll();
-    }
-  });
-})();
-</script>
+<script src="app.js"></script>
 </body>
 </html>
