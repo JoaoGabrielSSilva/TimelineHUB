@@ -2,7 +2,7 @@
   "use strict";
 
   // ---------------- constants ----------------
-  const STORAGE_KEY = "cartografia.franchiseTracker.v1";
+  const STORAGE_KEY = "timelinehub.franchiseTracker.v1";
   const DEFAULT_DATA = null;
   // Shared public folder: franquias/index.json lists files, e.g. ["zelda.json"]
   // Each file is a franchise JSON exported by the "Export franchise" button.
@@ -77,7 +77,7 @@
     if(!loaded){
       for(const suffix of ['pt','en']){
         try{
-          const rawOld = localStorage.getItem("cartografia.franchiseTracker.v1." + suffix);
+          const rawOld = localStorage.getItem("timelinehub.franchiseTracker.v1." + suffix);
           if(rawOld){ const o = JSON.parse(rawOld); if(o && o.franchises) loaded = o; }
         }catch(_){}
       }
@@ -877,7 +877,7 @@
   // ---------------- bootstrap ----------------
   function setupStaticTextsAndSuggestions(){
     document.documentElement.lang = 'en';
-    document.title = 'Cartography — Franchise Order Organizer';
+    document.title = 'TimelineHUB — Franchise Order Organizer';
     const hintEl = document.getElementById('sidebarHintText');
     if(hintEl) hintEl.innerHTML = STR.sidebarHint;
     const opts = STR.typeSuggestions;
